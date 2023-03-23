@@ -1,8 +1,23 @@
+/*
+Pr1.c
+V 1.0 Marzo 2022
+Autores: Juan Luis Molina Acuña.
+
+
+
+	Compilar con el comando:
+gcc Pr1.cpp -o Pr1.exe -lstdc++
+
+*/
+
 #include <iostream>
 #include <regex>
 #include <string>
 #include <stdlib.h>
 #include <windows.h>
+#include <random>
+#include <cstdlib>
+#include <ctime>
 
 #define PANTALLA_ANCHO 120
 #define PANTALLA_ALTO 30
@@ -12,6 +27,15 @@ using namespace std;
 string definirAlfabeto();
 void presentacion();
 void leerPalabras(string &w1, string &w2, string alfa);
+void pre_su_sub(string w1, string w2);
+string generarPalabraAleatoria(string alfabeto, int l);
+auto generarLenguaje(string alfabeto, int c_palabras, int l)->vector<string>;
+void lenguajes(string alfabeto, vector<string> &l1, vector<string> &l2);
+/*-------------------------------------*/
+typedef std::mt19937 rng_type;
+std::uniform_int_distribution<rng_type::result_type> udist(0, 7);
+rng_type rng;
+/*--------------------------------*/
 
 void gotoxy(int x,int y){  
       HANDLE hcon;  
@@ -24,16 +48,24 @@ void gotoxy(int x,int y){
 
 int main()
 {
+	srand(time(nullptr));
 	string w1, w2;	// Cadenas
 	string ab;		// Alfabeto
-	
+	vector<string> l1 = vector<string>();
+	vector<string> l2 = vector<string>();
+
 	presentacion();
 	//string alfabeto;
 	//alfabeto = definirAlfabeto();
 	ab = "[a-zA-Z]";
 	regex alfabeto(ab);
-	leerPalabras(w1, w2, ab);
-	cout<<w1<<"   "<<w2;
+	//leerPalabras(w1, w2, ab);
+	w1 = "Hola";
+	w2 = "Holamundo";
+	//cout<<"\n"<<generarPalabraAleatoria(ab, 6);
+	//generarLenguaje(ab,5,8);
+	lenguajes(ab,l1,l2);
+	//cout<<w1<<"   "<<w2;
 }
 
 void presentacion()
@@ -43,6 +75,13 @@ void presentacion()
 	printf("\033[95mMolina, Juan. Rosas, Axel. Copyright 2023 %c\033[0m",184);
 }
 
+/*
+string definirAlfabeto()
+	Efecto:
+Lee entradas para definir un alfabeto regex
+	Regresa:
+string para definir un alfabeto
+*/
 string definirAlfabeto()
 {
 	string leer = "";	// Entrada
@@ -155,4 +194,106 @@ void leerPalabras(string &w1, string &w2, string alfa)
 			printf("\033[91mNO\033[0m es v%clida, introduzca otra",160);
 		}
 	}
+	
+	pre_su_sub(w1,w2);
+}
+
+void pre_su_sub(string w1, string w2)
+{
+	cout<<"\n\n         \033[96mPREFIJO, SUFIJO O SUBCADENA\033[0m\n";
+	regex subcadena(w1);
+	if(regex_search(w2, subcadena))
+	{
+		printf("\n  cadena1 \033[92mS%c\033[0m ES SUBCADENA",214);
+		if(w1 != w2)
+		{
+			printf(" PROPIA");
+		}
+		
+	}
+	else
+	{
+		printf("\n  cadena1 \033[91mNO\033[0m ES SUBCADENA");
+	}
+	printf(" de cadena2");
+	regex prefijo("^" + w1);
+	if(regex_search(w2, prefijo))
+	{
+		printf("\n  cadena1 \033[92mS%c\033[0m ES PREFIJO",214);
+		if(w1 != w2)
+		{
+			printf(" PROPIO");
+		}	
+	}
+	else
+	{
+		printf("\n  cadena1 \033[91mNO\033[0m ES PREFIJO");
+	}
+	printf(" de cadena2");
+	regex postfijo(w1 + "$");
+	if(regex_search(w2, postfijo))
+	{
+		printf("\n  cadena1 \033[92mS%c\033[0m ES SUFIJO",214);
+		if(w1 != w2)
+		{
+			printf(" PROPIO");
+		}	
+	}
+	else
+	{
+		printf("\n  cadena1 \033[91mNO\033[0m ES SUFIJO");
+	}
+	printf(" de cadena2");
+	printf("\n\n    ");
+	system("pause");
+}
+
+string generarPalabraAleatoria(string alfabeto, int l)
+{
+	regex r(alfabeto+"*");
+	string palabra = "";
+	char c;
+	
+	while(palabra.length() < l)
+	{
+		c = static_cast<char>(rand()%256);
+		palabra += c;
+		if(!regex_match(palabra, r))
+		{
+			palabra.pop_back();
+		}
+	}
+	return palabra;
+}
+
+auto generarLenguaje(string alfabeto, int c_palabras, int l)->vector<string>
+{
+	int i;
+	vector<string> lenguaje = vector<string>();
+
+	for(i=1; i<= c_palabras; i++)
+	{
+		lenguaje.push_back(generarPalabraAleatoria(alfabeto, l));
+	}
+	for (const auto& str : lenguaje)
+	{
+        std::cout << str << " ";
+    }
+	return lenguaje;
+}
+
+void lenguajes(string alfabeto, vector<string> &l1, vector<string> &l2)
+{
+	int cl1, ll1, cl2, ll2;
+	cout<<"\n         \033[96mGENERAR LENGUAJES ALEATORIOS\033[0m\n";
+	printf("\n  Cantidad de palabras del lenguaje 1: ");
+	cin>>cl1;
+	printf("\n  Longitud de palabras del lenguaje 1: ");
+	cin>>ll1;
+	l1 = generarLenguaje(alfabeto, cl1, ll1);
+	printf("\n  Cantidad de palabras del lenguaje 2: ");
+	cin>>cl2;
+	printf("\n  Longitud de palabras del lenguaje 2: ");
+	cin>>ll2;
+	l2 = generarLenguaje(alfabeto, cl2, ll2);
 }
