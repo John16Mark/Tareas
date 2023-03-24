@@ -1,12 +1,18 @@
 /*
 Pr1.c
 V 1.0 Marzo 2022
-Autores: Juan Luis Molina Acuña.
+Autores: Juan Luis Molina Acuï¿½a.
 
 
 
 	Compilar con el comando:
+g++ Pr1.cpp -std=c++11 -o Pr1.exe
+
+	O con los comandos
 gcc Pr1.cpp -o Pr1.exe -lstdc++
+gcc Pr1.cpp -o Pr1.exe -std=gnu++11
+gcc Pr1.cpp -o Pr1.exe -std=c++11
+
 
 */
 
@@ -21,6 +27,7 @@ gcc Pr1.cpp -o Pr1.exe -lstdc++
 
 #define PANTALLA_ANCHO 120
 #define PANTALLA_ALTO 30
+#define MAX_INTENTOS_LENGUAJE 1000
 
 using namespace std;
 
@@ -58,6 +65,7 @@ int main()
 	//string alfabeto;
 	//alfabeto = definirAlfabeto();
 	ab = "[a-zA-Z]";
+	ab = "[01]";
 	regex alfabeto(ab);
 	//leerPalabras(w1, w2, ab);
 	w1 = "Hola";
@@ -268,12 +276,38 @@ string generarPalabraAleatoria(string alfabeto, int l)
 
 auto generarLenguaje(string alfabeto, int c_palabras, int l)->vector<string>
 {
-	int i;
+	int i=0;
+	int intentos = 0;
+	string palabra;
+	bool valido;
 	vector<string> lenguaje = vector<string>();
 
-	for(i=1; i<= c_palabras; i++)
+	//for(i=1; i<= c_palabras; i++)
+	while(i<c_palabras && intentos < MAX_INTENTOS_LENGUAJE)
 	{
-		lenguaje.push_back(generarPalabraAleatoria(alfabeto, l));
+		valido = true;
+		palabra = generarPalabraAleatoria(alfabeto, l);
+		for (const auto& str : lenguaje)
+		{
+			if(palabra == str)
+			{
+				valido = false;
+				break;
+			}
+		}
+		if(valido)
+		{
+			lenguaje.push_back(palabra);
+			i++;
+		}
+		else
+		{
+			intentos++;
+		}
+	}
+	if(intentos>=MAX_INTENTOS_LENGUAJE)
+	{
+		cout << "Error generando el lenguaje\n";
 	}
 	for (const auto& str : lenguaje)
 	{
