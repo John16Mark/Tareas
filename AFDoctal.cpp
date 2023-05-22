@@ -3,7 +3,8 @@
 
 using namespace std;
 
-bool AFDoctal(const string& cadena) ;
+bool AFDoctal(const string& cadena);
+bool AFDdecimal(const string& cadena);
 
 int main() {
     string numero = "0754";
@@ -22,8 +23,7 @@ bool AFDoctal(const string& cadena) {
 		INICIAL,
 		SIGNO,
 		CERO,
-		DIGITO_OCTAL,
-		NO_OCTAL,
+		DIGITO,
 		INVALIDO
 	};
 
@@ -33,31 +33,50 @@ bool AFDoctal(const string& cadena) {
 		switch (estado) {
 		case Estado::INICIAL:
 			if (c == '0') {
-				estado = Estado::DIGITO_OCTAL;
+				estado = Estado::DIGITO;
 			}
 			else if (c == '+' || c == '-') {
 				estado = Estado::SIGNO;
 			}
 			else {
-				estado = Estado::NO_OCTAL;
+				estado = Estado::INVALIDO;
 				return false;
 			}
 			break;
 		case Estado::SIGNO:
 			if (c == '0'){
-				estado = Estado::DIGITO_OCTAL;
+				estado = Estado::DIGITO;
 			} else{
+				estado = Estado::INVALIDO;
 				return false;
 			}
 			break;
-		case Estado::DIGITO_OCTAL:
+		case Estado::DIGITO:
 			if (c >= '0' && c <= '7'){
-				estado = Estado::DIGITO_OCTAL;
+				estado = Estado::DIGITO;
 			} else {
+				estado = Estado::INVALIDO;
 				return false;
 			}
 			break;
 		}
 	}
-	return estado == Estado::DIGITO_OCTAL;
+	return estado == Estado::DIGITO;
+}
+
+bool AFDdecimal(const string& cadena){
+	enum class Estado {
+		INICIAL,
+		SIGNO,
+		DIGITO,
+		PUNTO,
+		DIGITO_PUNTO,
+		EXPONENTE,
+		SIGNO_EXPONENTE,
+		DIGITO_EXPONENTE
+	};
+
+	Estado estado = Estado::INICIAL;
+
+	return ((estado == Estado::DIGITO) || (estado == Estado::DIGITO_PUNTO) || (estado == Estado::DIGITO_EXPONENTE));
 }
