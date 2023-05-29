@@ -37,14 +37,15 @@ vector<int> ERRORES;
 
 int main(int argc, char* argv[]) {
 
+    // Abrir el archivo
     ifstream archivo(argv[1]);
+    // Variable que registra en qué línea vamos
     int contador_linea = 0;
 
+    // Vector de celdas
     vector<celda> analizador;
     
-
     string linea;
-
     //Para cada línea en el archivo
     while (getline(archivo, linea)) {
         contador_linea++;
@@ -57,7 +58,8 @@ int main(int argc, char* argv[]) {
             vector<string> partes = dividir(palabra, '(');
             vector<string> partes2;
 
-            // Dividir las palabras en subcadenas
+            // Dividir las palabras en subcadenas dependiendo si hay
+            // '{', '}', '[', ']', '(', ')', ',', ';', '"'
             for (const string& parte : partes) {
                 vector<string> aux = dividir(parte, '{');
                 for(int i = 0; i < aux.size(); i++) {

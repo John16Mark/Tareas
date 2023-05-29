@@ -252,6 +252,7 @@ Estado verificarPalabra(const string& palabra, int linea){
 		}
 	}
 
+	// Si terminó en alguno de estos estados, cambiarlos por otros.
 	if (estado == Estado::SIGNO || estado == Estado::COMENTARIOS_DIVISION || estado == Estado::COMENTARIOS_MULTIPLICACION){
 		estado = Estado::OPERADOR_BINARIO;
 	} else if (estado == Estado::ID_RESERVADA){

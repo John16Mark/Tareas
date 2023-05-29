@@ -37,11 +37,11 @@ enum class Estado {
 		LLAVES_CERRADURA = 30,
 		COMPARADOR_1 = 31,
 		COMPARADOR_2 = 32,
-		ERROR_NUMERICO = 35,
-		EXCLAMACION = 36,
-		PUNTO_COMA = 37,
-		COMA = 38,
-		COMILLAS = 39
+		ERROR_NUMERICO = 33,
+		EXCLAMACION = 34,
+		PUNTO_COMA = 35,
+		COMA = 36,
+		COMILLAS = 37
 	};
 
 Estado verificarPalabra(const string& palabra, int linea);
