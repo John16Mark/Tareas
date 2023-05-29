@@ -4,7 +4,6 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <deque>
 #include "automata.h"
 #include <windows.h>  
 
@@ -34,30 +33,31 @@ using namespace std;
 
 void tabla(vector<celda> *a);
 vector<string> dividir(const string& s, char delimitador);
+vector<int> ERRORES;
 
-int main() {
+int main(int argc, char* argv[]) {
 
-    ifstream archivo("archivo.java");
+    ifstream archivo(argv[1]);
     int contador_linea = 0;
 
     vector<celda> analizador;
     
 
     string linea;
+
+    //Para cada línea en el archivo
     while (getline(archivo, linea)) {
         contador_linea++;
         istringstream iss(linea);
         string palabra;
         celda celda_aux;
 
+        // Para cada palabra de la línea
         while (iss >> palabra) {
-            
-            deque<string> cola_despues;
-
-            cout << "\n    SE RECIBIO LA PALABRA: " <<palabra << endl;
             vector<string> partes = dividir(palabra, '(');
             vector<string> partes2;
 
+            // Dividir las palabras en subcadenas
             for (const string& parte : partes) {
                 vector<string> aux = dividir(parte, '{');
                 for(int i = 0; i < aux.size(); i++) {
@@ -88,25 +88,105 @@ int main() {
                     partes.push_back(aux.at(i));
                 }
             }
+            partes2.clear();
 
-            //
             for (const string& parte : partes) {
+                vector<string> aux = dividir(parte, ',');
+                for(int i = 0; i < aux.size(); i++) {
+                    partes2.push_back(aux.at(i));
+                }
+            }
+            partes.clear();
+
+            for (const string& parte : partes2) {
+                vector<string> aux = dividir(parte, ';');
+                for(int i = 0; i < aux.size(); i++) {
+                    partes.push_back(aux.at(i));
+                }
+            }
+            partes2.clear();
+
+            for (const string& parte : partes) {
+                vector<string> aux = dividir(parte, '"');
+                for(int i = 0; i < aux.size(); i++) {
+                    partes2.push_back(aux.at(i));
+                }
+            }
+
+            // Para cada elemento en el vector (cadena ya separada) Crear una celda que
+            // almacenará la palabra, su renglón, y su tipo.
+            for (const string& parte : partes2) {
                 celda_aux.pal = parte;
                 celda_aux.linea = contador_linea;
-                celda_aux.tipo = verificarPalabra(parte);
+                celda_aux.tipo = verificarPalabra(parte, contador_linea);
                 analizador.push_back(celda_aux);
             }
 
-            
-            
         }
     }
     tabla(&analizador);
-    
+    int j = 0;
+
+    // Revisa todas las palabras por errores
+    for(celda zelda: analizador) {
+        
+        if(zelda.tipo == Estado::ERROR_NUMERICO) {
+            if(find(ERRORES.begin(), ERRORES.end(), zelda.linea) == ERRORES.end()) {
+                ERRORES.push_back(zelda.linea);
+            }
+        }
+
+        // Si es un comparador o un operador aritmético, el programa revisará si la palabra anterior
+        // es o un valor numérico o un identificador
+        if(zelda.tipo == Estado::COMPARADOR_2 || zelda.tipo == Estado::COMPARADOR_1 || zelda.tipo == Estado::OPERADOR_BINARIO)
+        {
+            if((j-1 < 0) || (j+1 >= analizador.size()))
+            {
+                if(find(ERRORES.begin(), ERRORES.end(), zelda.linea) == ERRORES.end()) {
+                    ERRORES.push_back(zelda.linea);
+                }
+            } else {
+                if (analizador.at(j-1).tipo != Estado::IDENTIFICADOR && analizador.at(j-1).tipo != Estado::DECIMAL &&
+                    analizador.at(j-1).tipo != Estado::REAL && analizador.at(j-1).tipo != Estado::OCTAL &&
+                    analizador.at(j-1).tipo != Estado::HEX_DIGITO && analizador.at(j-1).tipo != Estado::EXP_REAL &&
+                    analizador.at(j-1).tipo != Estado::EXP_REAL2){
+                    if(find(ERRORES.begin(), ERRORES.end(), zelda.linea) == ERRORES.end()) {
+                        ERRORES.push_back(zelda.linea);
+                    }
+                }
+                if (analizador.at(j+1).tipo != Estado::IDENTIFICADOR && analizador.at(j+1).tipo != Estado::DECIMAL &&
+                    analizador.at(j+1).tipo != Estado::REAL && analizador.at(j+1).tipo != Estado::OCTAL &&
+                    analizador.at(j+1).tipo != Estado::HEX_DIGITO && analizador.at(j+1).tipo != Estado::EXP_REAL &&
+                    analizador.at(j+1).tipo != Estado::EXP_REAL2){
+                    if(find(ERRORES.begin(), ERRORES.end(), zelda.linea) == ERRORES.end()) {
+                        ERRORES.push_back(zelda.linea);
+                    }
+                }
+            }
+        }
+        j++;
+    }
+
+    // Imprimir los errores
+    cout << "\n\n";
+    if(ERRORES.empty()){
+        cout << "\t\t No hay errores de an"<<(char) 160<<"lisis l"<< (char)130 <<"xico en las constantes num"<< (char)130<<"ricas del archivo " << argv[1] << endl;
+    } else {
+        for (int err : ERRORES) {
+            cout << "\t\t Error en l" << (char)161 << "nea " << err << endl;
+        }
+    }
 
     return 0;
 }
 
+/*
+    vector<string> dividir(const string& s, char delimitador)
+recibe:
+              s:    string a dividir en subcadenas
+    delimitador:    caracter que será el que delimitará las divisiones.
+regresa: Vector con las subcadenas en las que se dividió s.
+*/
 vector<string> dividir(const string& s, char delimitador){
     vector<string> partes;
     string parte;
@@ -130,6 +210,13 @@ vector<string> dividir(const string& s, char delimitador){
     return partes;
 }
 
+/*
+    void tabla(vector<celda> *a)
+recibe:
+    a:  vector con celdas que contienen las palabras.
+Efecto:
+    Imprime en forma de tabla las palabras, en qué renglón se encuentran y qué tipo de palabra son.
+*/
 void tabla(vector<celda> *a){
     int i;
     system("CLS");

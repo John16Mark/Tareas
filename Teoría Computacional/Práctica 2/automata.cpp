@@ -5,16 +5,25 @@
 using namespace std;
 
 bool comentarioMulti = false;
+bool comentarioMono = false;
+int linea_comentada = 0;
+bool esCadena = false;
 
-Estado verificarPalabra(const string& palabra){
+Estado verificarPalabra(const string& palabra, int linea){
 
 	Estado estado = Estado::INICIAL;
 	//bool imprimir = true;
 	if(comentarioMulti && palabra.at(0) != '*'){
-		return Estado::COMENTARIO;
+		return Estado::COMENTARIO_MULTILINEA;
+	} else if (comentarioMono && linea == linea_comentada) {
+		return Estado::COMENTARIO_SIMPLE;
+	} else if(esCadena && palabra != "\""){
+		return Estado::COMILLAS;
 	} else {
-		for(char c: palabra){
-			switch (estado){
+		linea_comentada = 0;
+		comentarioMono = false;
+		for(char c: palabra) {
+			switch (estado) {
 				case Estado::INICIAL:
 					if(c == '0') {
 						estado = Estado::OCT_HEX;
@@ -29,6 +38,8 @@ Estado verificarPalabra(const string& palabra){
 						estado = Estado::COMENTARIOS_MULTIPLICACION;
 					} else if(c == '=') {
 						estado = Estado::ASIGNADOR;
+					} else if(c == '!') {
+						estado = Estado::EXCLAMACION;
 					} else if(c == '{') {
 						estado = Estado::LLAVES_APERTURA;
 					} else if(c == '}') {
@@ -43,13 +54,25 @@ Estado verificarPalabra(const string& palabra){
 						estado = Estado::PARENTESIS_CERRADURA;
 					} else if(c == '<' || c == '>'){
 						estado = Estado::COMPARADOR_1;
+					} else if(c == '"') {
+						estado = Estado::COMILLAS;
+						if(esCadena){
+							esCadena = false;
+						} else {
+							esCadena = true;
+						}
+						break;
 					} else if(c >= '1' && c <= '9') {
 						estado = Estado::DECIMAL;
 					} else if(isalpha(c) || c == '_' || c == '$') {
 						estado = Estado::ID_RESERVADA;
+					} else if(c == ',') {
+						estado = Estado::COMA;
+					} else if(c == ';') {
+						estado = Estado::PUNTO_COMA;
 					} else {
 						estado = Estado::INVALIDO;
-					}
+					} 
 					break;
 				case Estado::SIGNO:
 					if (c == '0'){
@@ -76,8 +99,6 @@ Estado verificarPalabra(const string& palabra){
 				case Estado::OCTAL:
 					if(c >= '0' && c <= '7'){
 						estado = Estado::OCTAL;
-					} else if(c == ',') {
-						estado = Estado::OCTAL_COMA;
 					} else {
 						estado = Estado::ERROR_NUMERICO;
 					}
@@ -92,10 +113,6 @@ Estado verificarPalabra(const string& palabra){
 				case Estado::HEX_DIGITO:
 					if((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F')){
 						estado = Estado::HEX_DIGITO;
-					} else if (c == ',') {
-						estado = Estado::HEX_COMA;
-					} else if (c == ';') {
-						estado = Estado::HEX_PCOMA;
 					} else {
 						estado = Estado::ERROR_NUMERICO;
 					}
@@ -105,10 +122,6 @@ Estado verificarPalabra(const string& palabra){
 						estado = Estado::DECIMAL;
 					} else if (c == '.') {
 						estado = Estado::PUNTO;
-					} else if (c == ',') {
-						estado = Estado::DECIMAL_COMA;
-					} else if (c == ';') {
-						estado = Estado::DECIMAL_PCOMA;
 					} else {
 						estado = Estado::ERROR_NUMERICO;
 					}
@@ -125,10 +138,6 @@ Estado verificarPalabra(const string& palabra){
 						estado = Estado::REAL;
 					} else if (c == 'E') {
 						estado = Estado::EXP; 
-					} else if (c == ',') {
-						estado = Estado::DECIMAL_COMA;
-					} else if (c == ';') {
-						estado = Estado::DECIMAL_PCOMA;
 					} else {
 						estado = Estado::ERROR_NUMERICO;
 					}
@@ -153,36 +162,19 @@ Estado verificarPalabra(const string& palabra){
 				case Estado::EXP_REAL:
 					if (c >= '0' && c <= '9') {
 						estado = Estado::EXP_REAL2;
-					} else if (c == ',') {
-						estado = Estado::DECIMAL_COMA;
-					} else if (c == ';') {
-						estado = Estado::DECIMAL_PCOMA;
 					} else {
 						estado = Estado::ERROR_NUMERICO;
 						return estado;
 					}
 					break;
 				case Estado::EXP_REAL2:
-					if (c == ',') {
-						estado = Estado::DECIMAL_COMA;
-					} else if (c == ';') {
-						estado = Estado::DECIMAL_PCOMA;
-					} else {
-						estado = Estado::ERROR_NUMERICO;
-						return estado;
-					}
-					break;
-				case Estado::OCTAL_COMA:
-				case Estado::OCTAL_PCOMA:
-				case Estado::DECIMAL_COMA:
-				case Estado::DECIMAL_PCOMA:
-				case Estado::HEX_COMA:
-				case Estado::HEX_PCOMA:
-					estado = Estado::INVALIDO;
+					estado = Estado::ERROR_NUMERICO;
+					return estado;
 					break;
 				case Estado::ID_RESERVADA:
 					if(palabra == "public" || palabra == "private" || palabra == "package" || palabra == "protected" ||
-						palabra == "static" || palabra == "final" || palabra == "class") {
+						palabra == "static" || palabra == "final" || palabra == "class" || palabra == "main" ||
+						palabra == "if" || palabra == "for" || palabra == "while") {
 						estado = Estado::RESERVADA;
 						return estado;
 					} else if(palabra == "int" || palabra == "short" || palabra == "void" || palabra == "float" ||
@@ -200,10 +192,6 @@ Estado verificarPalabra(const string& palabra){
 				case Estado::IDENTIFICADOR:
 					if (c == '_' || isalpha(c) || isdigit(c)){
 						estado = Estado::IDENTIFICADOR;
-					} else if(c == ','){
-						estado =Estado::ID_COMA;
-					} else if(c == ';'){
-						estado =Estado::ID_PCOMA;
 					} else {
 						estado = Estado::INVALIDO;
 					}
@@ -211,6 +199,8 @@ Estado verificarPalabra(const string& palabra){
 				case Estado::COMENTARIOS_DIVISION:
 					if (c == '/') {
 						estado = Estado::COMENTARIO_SIMPLE;
+						comentarioMono = true;
+						linea_comentada = linea;
 					} else if (c == '*') {
 						estado = Estado::COMENTARIO_MULTILINEA;
 						comentarioMulti = true;
@@ -222,6 +212,8 @@ Estado verificarPalabra(const string& palabra){
 					if (c == '/') {
 						estado = Estado::COMENTARIO_MULTILINEA_FIN;
 						comentarioMulti = false;
+					} else if(c == '*') {
+						estado = Estado::COMENTARIOS_MULTIPLICACION;
 					} else {
 						estado = Estado::INVALIDO;
 					}
@@ -238,6 +230,13 @@ Estado verificarPalabra(const string& palabra){
 					}
 					break;
 				case Estado::COMPARADOR_1:
+					if(c == '=') {
+						estado = Estado::COMPARADOR_2;
+					} else {
+						estado = Estado::INVALIDO;
+					}
+					break;
+				case Estado::EXCLAMACION:
 					if(c == '=') {
 						estado = Estado::COMPARADOR_2;
 					} else {
@@ -272,8 +271,13 @@ Estado verificarPalabra(const string& palabra){
 		estado = Estado::OPERADOR_BINARIO;
 	} else if (estado == Estado::ID_RESERVADA){
 		estado = Estado::IDENTIFICADOR;
+	} else if (estado == Estado::HEX || estado == Estado::PUNTO || estado == Estado::EXP || estado == Estado::EXP_SIGNO) {
+		estado = Estado::ERROR_NUMERICO;
 	}
-	// palabra == "(int)" || palabra == "(short)" || palabra == "(void)" || palabra == "(float)"
+	/*else if(estado == Estado::REAL || estado == Estado::EXP_REAL || estado == Estado::EXP_REAL2) {
+		estado = Estado::DECIMAL;
+	}*/
+	
 	return estado;
 }
 
@@ -286,34 +290,23 @@ string imprimirEstado(Estado e){
 		return "\033[31mINVALIDO\033[0m";
 		break;
 	case Estado::OCTAL:
-		return "Octal";
+		return "\033[92mOctal\033[0m";
 		break;
 	case Estado::HEX_DIGITO:
-		return "Hexadecimal";
+		return "\033[92mHexadecimal\033[0m";
 		break;
 	case Estado::DECIMAL:
-		return "Decimal entero";
+		return "\033[92mDecimal entero\033[0m";
 		break;
-	case Estado::OCTAL_COMA:
-		return "Octal coma";
+	case Estado::REAL:
+		return "\033[92mDecimal real\033[0m";
 		break;
-	case Estado::OCTAL_PCOMA:
-		return "Octal punto y coma";
-		break;
-	case Estado::DECIMAL_COMA:
-		return "Decimal coma";
-		break;
-	case Estado::DECIMAL_PCOMA:
-		return "Decimal punto y coma";
-		break;
-	case Estado::HEX_COMA:
-		return "Hexadecimal coma";
-		break;
-	case Estado::HEX_PCOMA:
-		return "Hexadecimal punto y coma";
+	case Estado::EXP_REAL:
+	case Estado::EXP_REAL2:
+		return "\033[92mDecimal real con exponente\033[0m";
 		break;
 	case Estado::OPERADOR_BINARIO:
-		return "Operador binario";
+		return "\033[32mOperador binario\033[0m";
 		break;
 	case Estado::ASIGNADOR:
 		return "Asignador";
@@ -322,34 +315,49 @@ string imprimirEstado(Estado e){
 		return "\033[96mPalabra reservada\033[0m";
 		break;
 	case Estado::TIPO_DATO:
-		return "Tipo de dato";
+		return "\033[36mTipo de dato\033[0m";
 		break;
 	case Estado::IDENTIFICADOR:
 		return "\033[93mIdentificador\033[0m";
 		break;
-	case Estado::ID_COMA:
-		return "\033[93mIdentificador coma\033[0m";
-		break;
-	case Estado::ID_PCOMA:
-		return "\033[93mIdentificador punto y coma\033[0m";
-		break;
 	case Estado::CORCHETES_APERTURA:
-		return "Corchetes: Abrir";
+		return "\033[97mCorchetes: Abrir\033[0m";
 		break;
 	case Estado::CORCHETES_CERRADURA:
-		return "Corchetes: Cerrar";
+		return "\033[97mCorchetes: Cerrar\033[0m";
 		break;
 	case Estado::PARENTESIS_APERTURA:
-		return "Parentesis: Abrir";
+		return "\033[97mParentesis: Abrir\033[0m";
 		break;
 	case Estado::PARENTESIS_CERRADURA:
-		return "Parentesis: Cerrar";
+		return "\033[97mParentesis: Cerrar\033[0m";
 		break;
 	case Estado::LLAVES_APERTURA:
-		return "Llaves: Abrir";
+		return "\033[97mLlaves: Abrir\033[0m";
 		break;
 	case Estado::LLAVES_CERRADURA:
-		return "Llaves: Cerrar";
+		return "\033[97mLlaves: Cerrar\033[0m";
+		break;
+	case Estado::COMA:
+		return "\033[97mComa\033[0m";
+		break;
+	case Estado::PUNTO_COMA:
+		return "\033[97mPunto y coma\033[0m";
+		break;
+	case Estado::COMILLAS:
+		return "\033[34mCadena\033[0m";
+		break;
+	case Estado::COMPARADOR_1:
+	case Estado::COMPARADOR_2:
+		return "\033[95mComparador\033[0m";
+		break;
+	case Estado::COMENTARIO_SIMPLE:
+		return "\033[90m\033[4mComentario monolinea\033[0m";
+		break;
+	case Estado::COMENTARIO:
+	case Estado::COMENTARIO_MULTILINEA:
+	case Estado::COMENTARIO_MULTILINEA_FIN:
+		return "\033[90m\033[4mComentario multilinea\033[0m";
 		break;
 	default:
 		return "\033[90m\033[4mPOR IDENTIFICAR\033[0m";
