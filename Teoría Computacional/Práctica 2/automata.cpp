@@ -243,21 +243,6 @@ Estado verificarPalabra(const string& palabra, int linea){
 						estado = Estado::INVALIDO;
 					}
 					break;
-				case Estado::COMENTARIO:
-					if(c == '*'){
-						estado = Estado::COMENTARIO_SLASH;
-					} else {
-						Estado::COMENTARIO;
-					}
-					break;
-				case Estado::COMENTARIO_SLASH:
-					if (c == '/') {
-						estado = Estado::COMENTARIO_MULTILINEA_FIN;
-						comentarioMulti = false;
-					} else {
-						Estado::COMENTARIO;
-					}
-					break;
 				case Estado::ERROR_NUMERICO:
 					break;
 				default:
@@ -274,9 +259,6 @@ Estado verificarPalabra(const string& palabra, int linea){
 	} else if (estado == Estado::HEX || estado == Estado::PUNTO || estado == Estado::EXP || estado == Estado::EXP_SIGNO) {
 		estado = Estado::ERROR_NUMERICO;
 	}
-	/*else if(estado == Estado::REAL || estado == Estado::EXP_REAL || estado == Estado::EXP_REAL2) {
-		estado = Estado::DECIMAL;
-	}*/
 	
 	return estado;
 }
@@ -354,7 +336,6 @@ string imprimirEstado(Estado e){
 	case Estado::COMENTARIO_SIMPLE:
 		return "\033[90m\033[4mComentario monolinea\033[0m";
 		break;
-	case Estado::COMENTARIO:
 	case Estado::COMENTARIO_MULTILINEA:
 	case Estado::COMENTARIO_MULTILINEA_FIN:
 		return "\033[90m\033[4mComentario multilinea\033[0m";
