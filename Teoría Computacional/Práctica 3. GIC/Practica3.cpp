@@ -106,20 +106,25 @@ bool analizador(const string& cadena) {
 			if( esCaracter(c) && pila.top() == 'Z' ) {
 				generar += "<Id>";
 				estado = Estado::ID_INICIO;
+				// La pila se queda igual
 			} else if(c == ' ' && pila.top() == 'Z') {
 				// Se queda en el mismo estado
+				// La pila se queda igual
 			} else {
 				estado = Estado::INVALIDO;
 			}
 			break;
 		case Estado::ID_INICIO:
 			if( (esCaracter(c) || esDigito(c)) && pila.top() == 'Z' ) {
-				estado = Estado::ID_INICIO;
+				// Se queda en el mismo estado
+				// La pila se queda igual
 			} else if( c == ' ' && pila.top() == 'Z') {
 				estado = Estado::ESPACIO;
+				// La pila se queda igual
 			} else if( c == '=' && pila.top() == 'Z') {
 				generar += "=";
 				estado = Estado::INICIO_EXPRESION;
+				// La pila se queda igual
 			} else {
 				estado = Estado::INVALIDO;
 			}
@@ -127,6 +132,7 @@ bool analizador(const string& cadena) {
 		case Estado::ESPACIO:
 			if(c == ' ' && pila.top() == 'Z') {
 				estado = Estado::ESPACIO;
+				// La pila se queda igual
 			} else if( c == '=' && pila.top() == 'Z') {
 				estado = Estado::INICIO_EXPRESION;
 				// La pila se queda igual
