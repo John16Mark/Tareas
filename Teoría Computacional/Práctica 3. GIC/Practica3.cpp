@@ -28,10 +28,10 @@ string imprimirEstado(Estado e);
 
 void generacion();
 
-// Si queremos que imprima qu√© es lo que hace paso por paso
+// Si queremos que imprima quÈ es lo que hace paso por paso
 bool realizarImpresiones = false;
-// Si queremos probar el programa con los ejemplos dados en las especificaciones de la pr√°ctica
-bool pruebas = true;
+// Si queremos probar el programa con los ejemplos dados en las especificaciones de la pr·ctica
+bool pruebas = false;
 
 string generar = "";
 
@@ -54,9 +54,9 @@ int main(int argc, char* argv[]) {
 			bool paso = analizador(s);
 			
 			if(paso) {
-		    	cout << "\033[92mTRUE\033[0m ";
+		    	cout << "\033[92mCORRECTO\033[0m ";
 		    } else {
-		    	cout << "\033[91mFALSE\033[0m ";
+		    	cout << "\033[91mERROR\033[0m ";
 		    }
 		    cout << s << endl << endl;
 		    if(paso) {
@@ -72,15 +72,17 @@ int main(int argc, char* argv[]) {
 		string s = argv[1];
 		bool paso = analizador(s);
 		if(paso) {
-	    	cout << "\033[92mTRUE\033[0m ";
+	    	cout << "\033[92mCORRECTO\033[0m ";
 	    } else {
-	    	cout << "\033[91mFALSE\033[0m ";
+	    	cout << "\033[91mERROR\033[0m ";
 	    }
 	    cout << s << endl << endl;
 	    if(paso) {
 	    	//imprimir
 	    	//validarYMostrarArbol(s);
-	    	cout << generar;
+	    	generacion();
+	    	cout << generar << "\033[95m " << (char)26 << "\033[0m"<< endl;
+	    	cout << s << endl;
 	    }
 	}
 
@@ -93,6 +95,7 @@ bool analizador(const string& cadena) {
 	pila.push('Z');
 	Estado estado = Estado::INICIO;
 	
+	// Para pruebas
 	if(realizarImpresiones){
 		cout << "\033[96mchar\tTope\tEstado\033[0m" <<endl;
 	}
@@ -156,7 +159,7 @@ bool analizador(const string& cadena) {
 			} else if(c == '(') {
 				// Se queda en el mismo estado
 				generar += "(";
-				pila.push(c);
+				pila.push('(');
 			} else {
 				estado = Estado::INVALIDO;
 			}
@@ -219,8 +222,8 @@ bool analizador(const string& cadena) {
 				generar += ")";
 				estado = Estado::NUMERO;
 			} else if(c == ')' && esOperador(pila.top())){
-				pila.pop();
 				generar += ")";
+				pila.pop();
 				pila.pop();
 				estado = Estado::NUMERO;
 			} else if(c == '=' && pila.top() == 'Z') {
@@ -336,6 +339,7 @@ void generacion() {
 		aux.replace(pos, 8, "<Termino>");
 		v.push_back(aux);
 	}
+
 	while(true) {
 
 		string aux3 = aux;
@@ -371,7 +375,6 @@ void generacion() {
 	while (true) {
 		size_t pos = aux.find("<Expresion>=");
 		if(pos == string::npos) {break;}
-
 		aux.replace(pos, 11, "<Id>");
 		v.push_back(aux);
 	}
@@ -383,7 +386,6 @@ void generacion() {
 		while (true) {
 			size_t pos = aux.find("=<Expresion>");
 			if(pos == string::npos) {break;}
-
 			aux.replace(pos, 12, "<Igualdad>");
 			v.push_back(aux);
 		}
@@ -397,17 +399,13 @@ void generacion() {
 		while (true) {
 			size_t pos = aux.find("<Id><Igualdad>");
 			if(pos == string::npos) {break;}
-
 			aux.replace(pos, 14, "<Igualdad>");
 			v.push_back(aux);
 		}
 
-		
-
 		while (true) {
 			size_t pos = aux.find("<Igualdad>");
 			if(pos == string::npos) {break;}
-
 			aux.replace(pos, 10, "<Expresion>");
 			v.push_back(aux);
 		}
@@ -418,7 +416,7 @@ void generacion() {
 	}
 	
 	for(int i = v.size()-1; i >= 0; i--) {
-		cout << v.at(i) << endl;
+		cout << v.at(i) << "\033[95m " << (char)26 << "\033[0m"<< endl;
 	}
 
 }
